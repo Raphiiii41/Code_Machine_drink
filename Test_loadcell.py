@@ -1,24 +1,57 @@
 #include "HX711.h"
 
-const int LOADCELL_DOUT_PIN = 2;
-const int LOADCELL_SCK_PIN = 3;
+// Déclaration des broches pour l'HX711
+const int DOUT_PIN = 2;
+const int CLK_PIN = 3;
 
 HX711 scale;
 
-
 void setup() {
   Serial.begin(9600);
-  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  scale.begin(DOUT_PIN, CLK_PIN);
+
+  // Effectuer la tare au début
+  tare();
 }
 
 void loop() {
-  if (scale.is_ready()){
-    scale.set_scale(); // Changer le code après cette ligne là
-    long reading = scale.get_units(40);
-    Serial.println(reading);
+  if (scale.is_ready()) {
+    float weight = (getWeight())/1000;
+    
+    if (weight > -10 && weight < 10) {
+    weight = 0;
+    Serial.print("Poids : ");
+    Serial.print(weight, 2);
+    Serial.println("g");
+    delay(1000);
+    }
+    else{
+    Serial.print("Poids : ");
+    Serial.print(weight, 2);
+    Serial.println("g");
+    delay(1000);
+    }
+    
+  } else {
+    Serial.println("Erreur de communication avec HX711. Vérifiez les connexions.");
+  }
+}
+
+void tare() {
+  Serial.println("Calibrating. Please wait...");
+
+  // Attendre que l'HX711 soit prêt
+  while (!scale.is_ready()) {
     delay(100);
   }
-  else{
-    Serial.println("HX711 not found.");
-  }
+
+  // Effectuer la tare
+  scale.tare();
+
+  Serial.println("Tare effectuée. Placez l'objet à peser.");
+}
+
+float getWeight() {
+  // Lire le poids après la tare
+  return scale.get_units(10);
 }
